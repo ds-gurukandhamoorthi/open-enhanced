@@ -1,7 +1,9 @@
+use std::env;
 use std::fs;
 
 fn main() {
-    let fasd_file = String::from("/home/guru/.fasd");
+    let home = env::var("HOME").unwrap();
+    let fasd_file = String::from(format!("{}/.fasd", home));
     let contents = fs::read_to_string(fasd_file).unwrap();
     for line in contents.lines() {
         let mut parts = line.split('|');
