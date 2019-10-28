@@ -1,5 +1,8 @@
+use std::collections::HashSet;
 use std::env;
+use std::ffi::OsStr;
 use std::fs;
+use std::path::Path;
 use std::process;
 
 fn main() {
@@ -11,42 +14,40 @@ fn main() {
 
     let filetype = args.next().unwrap();
 
+    let mut directories: HashSet<&str> = HashSet::new();
+
     let contents = fs::read_to_string(fasd_file).unwrap();
     for line in contents.lines() {
         let mut parts = line.split('|');
         match parts.next() {
-            Some(file) => match filetype.as_ref() {
-                "book" => {
-                    if is_book(file) {
-                        println!("{}", file);
+            Some(file) => {
+                if file_of_filetype(file, filetype.as_ref()) {
+                    println!("{}", file);
+                    let dir = Path::new(file).parent().unwrap();
+                    match dir.as_os_str().to_str() {
+                        Some(direc) => {
+                            directories.insert(direc);
+                        }
+                        None => eprintln!("{}, {:?}", "Unable to insert", dir),
                     }
                 }
-                "audio" => {
-                    if is_audio(file) {
-                        println!("{}", file);
-                    }
-                }
-                "video" => {
-                    if is_video(file) {
-                        println!("{}", file);
-                    }
-                }
-                "code" => {
-                    if is_code(file) {
-                        println!("{}", file);
-                    }
-                }
-                "image" => {
-                    if is_image(file) {
-                        println!("{}", file);
-                    }
-                }
-                _ => {
-                    eprintln!("{}: {}", "Unknown type", filetype);
-                    process::exit(1);
-                }
-            },
+            }
             None => eprintln!("{}", "Some error occurred at parsing the .fasd file"),
+        }
+    }
+    // println!("{:?}", directories);
+    for dir in directories {
+        let files = fs::read_dir(dir).unwrap();
+        for file in files {
+            match file {
+                Ok(file) => {
+                    let file = format!("{}", file.path().display());
+                    if file_of_filetype(file.as_ref(), filetype.as_ref()) {
+                        println!("{}", file);
+                    }
+                }
+                Err(_) => (), //fasd has not yet deleted inexistant files. FIXME: more elaborate error message
+            }
         }
     }
 }
@@ -79,4 +80,15 @@ fn is_image(file: &str) -> bool {
 
 fn is_code(file: &str) -> bool {
     file.ends_with(".R") || file.ends_with(".py")
+}
+
+fn file_of_filetype(file: &str, filetype: &str) -> bool {
+    match filetype {
+        "book" => is_book(file),
+        "audio" => is_audio(file),
+        "video" => is_video(file),
+        "code" => is_code(file),
+        "image" => is_image(file),
+        _ => false,
+    }
 }
