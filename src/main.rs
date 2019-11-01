@@ -1,13 +1,14 @@
 use std::collections::HashSet;
 use std::env;
-use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
-use std::process;
+use std::io::Write;
+use std::process::{Command, Stdio};
+use std::str;
 
 fn main() {
     let home = env::var("HOME").unwrap();
-    let fasd_file = String::from(format!("{}/.fasd", home));
+    let fasd_file = format!("{}/.fasd", home);
 
     let mut args = env::args();
     args.next();
@@ -16,13 +17,19 @@ fn main() {
 
     let mut directories: HashSet<&str> = HashSet::new();
 
+    let mut ext_process = Command::new("dmenu").arg("-i").arg("-l").arg("3").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu");
+
+    let ext_process_stdin = ext_process.stdin.as_mut().unwrap();
+
     let contents = fs::read_to_string(fasd_file).unwrap();
     for line in contents.lines() {
         let mut parts = line.split('|');
         match parts.next() {
             Some(file) => {
                 if file_of_filetype(file, filetype.as_ref()) {
-                    println!("{}", file);
+                    // println!("{}", file);
+                    let file_ln = format!("{}\n", file);
+                    ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
                     let dir = Path::new(file).parent().unwrap();
                     match dir.as_os_str().to_str() {
                         Some(direc) => {
@@ -43,13 +50,18 @@ fn main() {
                 Ok(file) => {
                     let file = format!("{}", file.path().display());
                     if file_of_filetype(file.as_ref(), filetype.as_ref()) {
-                        println!("{}", file);
+                        // println!("{}", file);
+                        let file_ln = format!("{}\n", file);
+                        ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
                     }
                 }
-                Err(_) => (), //fasd has not yet deleted inexistant files. FIXME: more elaborate error message
+                Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
             }
         }
     }
+
+    let chosen = ext_process.wait_with_output().expect("Error while getting chosen file from dmenu");
+    println!("{}", str::from_utf8(&chosen.stdout).unwrap().trim());
 }
 
 fn is_book(file: &str) -> bool {
