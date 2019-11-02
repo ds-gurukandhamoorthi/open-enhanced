@@ -17,50 +17,55 @@ fn main() {
 
     let mut directories: HashSet<&str> = HashSet::new();
 
-    let mut ext_process = Command::new("dmenu").arg("-i").arg("-l").arg("3").stdin(Stdio::piped()).spawn().expect("Error opening dmenu");
+    let mut ext_process = Command::new("dmenu").arg("-i").arg("-l").arg("3").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu");
 
-    let ext_process_stdin = ext_process.stdin.as_mut().unwrap();
-    let mut ext_process_stdin = BufWriter::new(ext_process_stdin);
+    { //THIS CODE BLOCK is to localize the following borrow.
+        let ext_process_stdin = ext_process.stdin.as_mut().unwrap();
+        let mut ext_process_stdin = BufWriter::new(ext_process_stdin);
 
-    let contents = fs::read_to_string(fasd_file).unwrap();
-    for line in contents.lines() {
-        let mut parts = line.split('|');
-        match parts.next() {
-            Some(file) => {
-                if file_of_filetype(file, filetype.as_ref()) {
-                    // println!("{}", file);
-                    let file_ln = format!("{}\n", file);
-                    ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
-                    let dir = Path::new(file).parent().unwrap();
-                    match dir.as_os_str().to_str() {
-                        Some(direc) => {
-                            directories.insert(direc);
-                        }
-                        None => eprintln!("{}, {:?}", "Unable to insert", dir),
-                    }
-                }
-            }
-            None => eprintln!("{}", "Some error occurred at parsing the .fasd file"),
-        }
-    }
-    // println!("{:?}", directories);
-    for dir in directories {
-        let files = fs::read_dir(dir).unwrap();
-        for file in files {
-            match file {
-                Ok(file) => {
-                    let file = format!("{}", file.path().display());
-                    if file_of_filetype(file.as_ref(), filetype.as_ref()) {
+        let contents = fs::read_to_string(fasd_file).unwrap();
+        for line in contents.lines() {
+            let mut parts = line.split('|');
+            match parts.next() {
+                Some(file) => {
+                    if file_of_filetype(file, filetype.as_ref()) {
                         // println!("{}", file);
                         let file_ln = format!("{}\n", file);
                         ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
+                        let dir = Path::new(file).parent().unwrap();
+                        match dir.as_os_str().to_str() {
+                            Some(direc) => {
+                                directories.insert(direc);
+                            }
+                            None => eprintln!("{}, {:?}", "Unable to insert", dir),
+                        }
                     }
                 }
-                Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
+                None => eprintln!("{}", "Some error occurred at parsing the .fasd file"),
             }
         }
+        // println!("{:?}", directories);
+        for dir in directories {
+            let files = fs::read_dir(dir).unwrap();
+            for file in files {
+                match file {
+                    Ok(file) => {
+                        let file = format!("{}", file.path().display());
+                        if file_of_filetype(file.as_ref(), filetype.as_ref()) {
+                            // println!("{}", file);
+                            let file_ln = format!("{}\n", file);
+                            ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
+                        }
+                    }
+                    Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
+                }
+            }
+        }
+        ext_process_stdin.flush().expect("Failed to flush to stdout");
     }
-    ext_process_stdin.flush().expect("Failed to flush to stdout");
+
+    let output = ext_process.wait_with_output().expect("Error while getting chosen file from dmenu");
+    println!("{}", str::from_utf8(&output.stdout).unwrap().trim());
 
 }
 
