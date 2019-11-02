@@ -28,8 +28,9 @@ fn main() {
             let mut parts = line.split('|');
             match parts.next() {
                 Some(file) => {
-                    if file_of_filetype(file, filetype.as_ref()) {
+                    if file_of_filetype(file, filetype.as_ref()) && Path::new(file).exists(){
                         // println!("{}", file);
+                        //FIXME: sometimes the file may be deleted but the parent directory is of interest. include that logic...
                         let file_ln = format!("{}\n", file);
                         ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
                         let dir = Path::new(file).parent().unwrap();
