@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::path::Path;
-use std::io::Write;
+use std::io::{Write, BufWriter};
 use std::process::{Command, Stdio};
 use std::str;
 
@@ -17,9 +17,10 @@ fn main() {
 
     let mut directories: HashSet<&str> = HashSet::new();
 
-    let mut ext_process = Command::new("dmenu").arg("-i").arg("-l").arg("3").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu");
+    let mut ext_process = Command::new("dmenu").arg("-i").arg("-l").arg("3").stdin(Stdio::piped()).spawn().expect("Error opening dmenu");
 
     let ext_process_stdin = ext_process.stdin.as_mut().unwrap();
+    let mut ext_process_stdin = BufWriter::new(ext_process_stdin);
 
     let contents = fs::read_to_string(fasd_file).unwrap();
     for line in contents.lines() {
@@ -59,9 +60,8 @@ fn main() {
             }
         }
     }
+    ext_process_stdin.flush().expect("Failed to flush to stdout");
 
-    let chosen = ext_process.wait_with_output().expect("Error while getting chosen file from dmenu");
-    println!("{}", str::from_utf8(&chosen.stdout).unwrap().trim());
 }
 
 fn is_book(file: &str) -> bool {
