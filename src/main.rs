@@ -17,6 +17,11 @@ fn main() {
     let filetype = args.next().unwrap();
 
     let mut directories: HashSet<&str> = HashSet::new();
+    let current_folders = get_current_dirs_of_tmux();
+
+    for f in current_folders.iter(){
+        directories.insert(&*f);
+    }
 
     let mut ext_process = Command::new("dmenu").arg("-i").arg("-l").arg("3").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu");
 
@@ -154,3 +159,14 @@ fn it_processes_r_code_files() {
 }
 
 //FIXME: case sensitive or not
+
+fn get_current_dirs_of_tmux() -> Vec<String>{
+    let tmux_args = ["list-panes", "-s", "-F #{pane_current_path}"];
+    let output = Command::new("tmux").args(&tmux_args).output();
+    let output = output.unwrap();
+    let current_folders = String::from_utf8_lossy(output.stdout.as_slice());
+    let current_folders: Vec<String> = current_folders.lines().map(|f| f.trim().to_owned()).collect();
+    //NOTE: does not return unique values. May not be problem as we use a set later.
+    //FIXME: return current folder of current pane first
+    current_folders
+}
