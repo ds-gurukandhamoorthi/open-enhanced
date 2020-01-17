@@ -19,11 +19,12 @@ fn main() {
     let mut directories: HashSet<&str> = HashSet::new();
     let current_folders = get_current_dirs_of_tmux();
 
-    for f in current_folders.iter(){
-        directories.insert(&*f);
+    for f in &current_folders{
+        directories.insert(f);
     }
 
-    let mut ext_process = Command::new("dmenu").arg("-i").arg("-l").arg("3").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu");
+    let dmenu_args = ["-i", "-l", "3"];
+    let mut ext_process = Command::new("dmenu").args(&dmenu_args).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu");
 
     { //THIS CODE BLOCK is to localize the following borrow.
         let ext_process_stdin = ext_process.stdin.as_mut().unwrap();
