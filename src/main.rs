@@ -52,23 +52,9 @@ fn main() {
                 None => eprintln!("{}", "Some error occurred at parsing the .fasd file"),
             }
         }
+
+        show_related_files_from_directories(&filetype, directories, &mut ext_process_stdin);
         // println!("{:?}", directories);
-        for dir in directories {
-            let files = fs::read_dir(dir).unwrap();
-            for file in files {
-                match file {
-                    Ok(file) => {
-                        let file = format!("{}", file.path().display());
-                        if file_of_filetype(file.as_ref(), filetype.as_ref()) {
-                            // println!("{}", file);
-                            let file_ln = format!("{}\n", file);
-                            ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
-                        }
-                    }
-                    Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
-                }
-            }
-        }
         ext_process_stdin.flush().expect("Failed to flush to stdout");
     }
 
@@ -170,4 +156,23 @@ fn get_current_dirs_of_tmux() -> Vec<String>{
     //NOTE: does not return unique values. May not be problem as we use a set later.
     //FIXME: return current folder of current pane first
     current_folders
+}
+
+fn show_related_files_from_directories(filetype: &str, directories: HashSet<&str>, ext_process_stdin: &mut BufWriter<impl Write>) -> (){
+        for dir in directories {
+            let files = fs::read_dir(dir).unwrap();
+            for file in files {
+                match file {
+                    Ok(file) => {
+                        let file = format!("{}", file.path().display());
+                        if file_of_filetype(file.as_ref(), filetype.as_ref()) {
+                            // println!("{}", file);
+                            let file_ln = format!("{}\n", file);
+                            ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
+                        }
+                    }
+                    Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
+                }
+            }
+        }
 }
