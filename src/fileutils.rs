@@ -1,11 +1,6 @@
 use regex::Regex;
-fn file_has_extension(file: &str, extensions: &[&str]) -> bool{
-    extensions.iter().any(|ext| file.ends_with(ext))
-}
 
 fn is_book(file: &str) -> bool {
-    // let book_exts = [".pdf", ".epub", ".mobi"];
-    // file_has_extension(file, &book_exts)
     lazy_static! {
         static ref BOOK_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(pdf|epub|mobi)$"#).unwrap();
     }
@@ -13,23 +8,31 @@ fn is_book(file: &str) -> bool {
 }
 
 fn is_audio(file: &str) -> bool {
-    let audio_exts = [".mp3", ".wav", ".m4a", ".aac", ".opus", ".webm"];
-    file_has_extension(file, &audio_exts)
+    lazy_static! {
+        static ref AUDIO_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(mp3|wav|m4a|aac|opus|webm)$"#).unwrap();
+    }
+    AUDIO_EXTENSIONS_PATTERN.is_match(file)
 }
 
 fn is_video(file: &str) -> bool {
-    let video_exts = [".mp4",".mkv", ".avi", ".wav", ".mpg", ".webm"];
-    file_has_extension(file, &video_exts)
+    lazy_static! {
+        static ref VIDEO_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(mp4|mkv|avi|wav|mpg|webm)$"#).unwrap();
+    }
+    VIDEO_EXTENSIONS_PATTERN.is_match(file)
 }
 
 fn is_image(file: &str) -> bool {
-    let image_exts = [".png", ".jpg", ".gif"];
-    file_has_extension(file, &image_exts)
+    lazy_static! {
+        static ref IMAGE_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(png|jpg|jpe?g|gif)$"#).unwrap();
+    }
+    IMAGE_EXTENSIONS_PATTERN.is_match(file)
 }
 
 fn is_code(file: &str) -> bool {
-    let code_exts = [".R", ".py"];
-    file_has_extension(file, &code_exts)
+    lazy_static! {
+        static ref CODE_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(R|py|rs|sh)$"#).unwrap();
+    }
+    CODE_EXTENSIONS_PATTERN.is_match(file)
 }
 
 pub fn file_of_filetype(file: &str, filetype: &str) -> bool {
@@ -77,6 +80,14 @@ pub fn file_of_filetype(file: &str, filetype: &str) -> bool {
     fn it_processes_png() {
         assert!(is_image("sample.png"));
         assert!(!is_image("samplepng"));
+    }
+
+#[test]
+    fn it_processes_jpegs() {
+        assert!(is_image("sample.jpg"));
+        assert!(is_image("sample.jpeg"));
+        assert!(!is_book("samplejpg"));
+        assert!(!is_book("samplejpeg"));
     }
 
 #[test]
