@@ -42,7 +42,7 @@ pub fn file_of_filetype(file: &str, filetype: &str) -> bool {
         "video" => is_video(file),
         "code" => is_code(file),
         "image" => is_image(file),
-        _ => false,
+        extension => file.ends_with(extension),
     }
 }
 
