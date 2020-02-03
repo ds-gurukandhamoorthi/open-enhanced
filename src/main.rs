@@ -14,7 +14,7 @@ fn main() {
     let fasd_file = format!("{}/.fasd", home);
 
     let mut args = env::args();
-    args.next();
+    let called_by = args.next().unwrap();
 
     let filetype = args.next().unwrap();
 
@@ -25,8 +25,12 @@ fn main() {
         directories.insert(f);
     }
 
-    let dmenu_args = ["-i", "-l", "3"];
-    let mut ext_process = Command::new("dmenu").args(&dmenu_args).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu");
+    let mut ext_process = if called_by.contains("list") {
+         Command::new("cat").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu")
+    } else {
+        let dmenu_args = ["-i", "-l", "3"];
+        Command::new("dmenu").args(&dmenu_args).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu")
+    };
 
     { //THIS CODE BLOCK is to localize the following borrow.
         let ext_process_stdin = ext_process.stdin.as_mut().unwrap();
