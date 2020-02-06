@@ -84,9 +84,9 @@ fn get_current_dirs_of_tmux() -> Vec<String>{
     current_folders
 }
 
-fn show_related_files_from_directories(filetype: &str, directories: HashSet<&str>, ext_process_stdin: &mut dyn Write) -> (){
+fn show_related_files_from_directories<W: Write, T: AsRef<str>>(filetype: &str, directories: impl IntoIterator<Item = T>, ext_process_stdin: &mut W) -> (){
         for dir in directories {
-            let files = fs::read_dir(dir).unwrap();
+            let files = fs::read_dir(dir.as_ref()).unwrap();
             for file in files {
                 match file {
                     Ok(file) => {
