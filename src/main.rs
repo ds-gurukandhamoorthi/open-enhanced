@@ -8,11 +8,11 @@ use std::process::{Command, Stdio};
 use std::str;
 use std::iter::Iterator;
 
-mod fileutils;
 
+mod fileutils;
 fn main() {
     let home = env::var("HOME").unwrap();
-    let fasd_file = format!("{}/.fasd", home);
+    let fasd_file: String = format!("{}/.fasd", home);
 
     let mut args = env::args();
     let called_by = args.next().unwrap();
@@ -25,6 +25,8 @@ fn main() {
     for f in &current_folders{
         directories.insert(f);
     }
+
+    let mut already_shown = HashSet::<String>::new();
 
     let mut ext_process = if called_by.contains("list") {
          Command::new("cat").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu")
@@ -41,7 +43,8 @@ fn main() {
         for line in contents.lines() {
             let mut parts = line.split('|');
             match parts.next() {
-                Some(file) => {
+                Some(file) if !already_shown.contains(file) => {
+                    already_shown.insert(file.to_string());
                     if fileutils::file_of_filetype(file, filetype.as_ref()) && Path::new(file).exists(){
                         // println!("{}", file);
                         //FIXME: sometimes the file may be deleted but the parent directory is of interest. include that logic...
@@ -57,10 +60,27 @@ fn main() {
                     }
                 }
                 None => eprintln!("{}", "Some error occurred at parsing the .fasd file"),
+                _ => {}, //file already shown => do nothing!
             }
         }
 
-        show_related_files_from_directories(&filetype, directories, &mut ext_process_stdin);
+        for dir in directories {
+            let files = fs::read_dir(dir).unwrap();
+            for file in files {
+                match file {
+                    Ok(file) => {
+                        let file = format!("{}", file.path().display());
+                        if fileutils::file_of_filetype(file.as_ref(), &filetype) && !already_shown.contains(file.as_str()) {
+                            // println!("{}", file);
+                            already_shown.insert(file.clone());
+                            let file_ln = format!("{}\n", file);
+                            ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
+                        }
+                    }
+                    Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
+                }
+            }
+        }
         // println!("{:?}", directories);
         ext_process_stdin.flush().expect("Failed to flush to stdout");
     }
@@ -82,23 +102,4 @@ fn get_current_dirs_of_tmux() -> Vec<String>{
     //NOTE: does not return unique values. May not be problem as we use a set later.
     //FIXME: return current folder of current pane first
     current_folders
-}
-
-fn show_related_files_from_directories<W: Write, T: AsRef<str>>(filetype: &str, directories: impl IntoIterator<Item = T>, ext_process_stdin: &mut W) {
-        for dir in directories {
-            let files = fs::read_dir(dir.as_ref()).unwrap();
-            for file in files {
-                match file {
-                    Ok(file) => {
-                        let file = format!("{}", file.path().display());
-                        if fileutils::file_of_filetype(file.as_ref(), filetype) {
-                            // println!("{}", file);
-                            let file_ln = format!("{}\n", file);
-                            ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
-                        }
-                    }
-                    Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
-                }
-            }
-        }
 }
