@@ -1,4 +1,3 @@
-#[macro_use] extern crate lazy_static;
 use std::collections::HashSet;
 use std::env;
 use std::fs;
@@ -55,11 +54,11 @@ fn main() {
                             Some(direc) => {
                                 directories.insert(direc);
                             }
-                            None => eprintln!("{}, {:?}", "Unable to insert", dir),
+                            None => eprintln!("Unable to insert {:?}", dir),
                         }
                     }
                 }
-                None => eprintln!("{}", "Some error occurred at parsing the .fasd file"),
+                None => eprintln!("Some error occurred at parsing the .fasd file"),
                 _ => {}, //file already shown => do nothing!
             }
         }
@@ -77,7 +76,7 @@ fn main() {
                             ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
                         }
                     }
-                    Err(_) =>  {eprintln!("{}", "fasd has not yet deleted inexistant files");},
+                    Err(_) =>  {eprintln!("fasd has not yet deleted inexistant files");},
                 }
             }
         }

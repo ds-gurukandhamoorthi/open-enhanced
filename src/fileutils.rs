@@ -1,37 +1,39 @@
 use regex::Regex;
+use once_cell::sync::Lazy;
+
+static BOOK_EXTENSIONS_PATTERN : Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"\.(pdf|epub|mobi)$"#).unwrap()
+});
+static AUDIO_EXTENSIONS_PATTERN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"\.(mp3|wav|m4a|aac|opus|webm)$"#).unwrap()
+});
+static VIDEO_EXTENSIONS_PATTERN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"\.(mp4|mkv|avi|wav|mpg|webm)$"#).unwrap()
+});
+static IMAGE_EXTENSIONS_PATTERN : Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"\.(png|jpg|jpe?g|gif)$"#).unwrap()
+});
+static CODE_EXTENSIONS_PATTERN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"\.(R|py|rs|sh)$"#).unwrap()
+});
 
 fn is_book(file: &str) -> bool {
-    lazy_static! {
-        static ref BOOK_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(pdf|epub|mobi)$"#).unwrap();
-    }
     BOOK_EXTENSIONS_PATTERN.is_match(file)
 }
 
 fn is_audio(file: &str) -> bool {
-    lazy_static! {
-        static ref AUDIO_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(mp3|wav|m4a|aac|opus|webm)$"#).unwrap();
-    }
     AUDIO_EXTENSIONS_PATTERN.is_match(file)
 }
 
 fn is_video(file: &str) -> bool {
-    lazy_static! {
-        static ref VIDEO_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(mp4|mkv|avi|wav|mpg|webm)$"#).unwrap();
-    }
     VIDEO_EXTENSIONS_PATTERN.is_match(file)
 }
 
 fn is_image(file: &str) -> bool {
-    lazy_static! {
-        static ref IMAGE_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(png|jpg|jpe?g|gif)$"#).unwrap();
-    }
     IMAGE_EXTENSIONS_PATTERN.is_match(file)
 }
 
 fn is_code(file: &str) -> bool {
-    lazy_static! {
-        static ref CODE_EXTENSIONS_PATTERN: Regex = Regex::new(r#"\.(R|py|rs|sh)$"#).unwrap();
-    }
     CODE_EXTENSIONS_PATTERN.is_match(file)
 }
 
