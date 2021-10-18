@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -6,7 +5,7 @@ use std::io::{Write, BufWriter};
 use std::process::{Command, Stdio};
 use std::str;
 use std::iter::Iterator;
-
+use fnv::FnvHashSet;
 
 mod fileutils;
 fn main() {
@@ -18,14 +17,14 @@ fn main() {
 
     let filetype = args.next().unwrap();
 
-    let mut directories: HashSet<&str> = HashSet::new();
+    let mut directories: FnvHashSet<&str> = FnvHashSet::default();
     let current_folders = get_current_dirs_of_tmux();
 
     for f in &current_folders{
         directories.insert(f);
     }
 
-    let mut already_shown = HashSet::<String>::new();
+    let mut already_shown = FnvHashSet::<String>::default();
 
     let mut ext_process = if called_by.contains("list") {
          Command::new("cat").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu")
