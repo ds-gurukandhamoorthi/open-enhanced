@@ -10,7 +10,7 @@ use fnv::FnvHashSet;
 mod fileutils;
 fn main() {
     let home = env::var("HOME").unwrap();
-    let fasd_file: String = format!("{}/.fasd", home);
+    let fasd_file: String = format!("{home}/.fasd");
 
     let mut args = env::args();
     let called_by = args.next().unwrap();
@@ -30,7 +30,7 @@ fn main() {
          Command::new("cat").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu")
     } else {
         let dmenu_args = ["-i", "-l", "3"];
-        Command::new("dmenu").args(&dmenu_args).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu")
+        Command::new("dmenu").args(dmenu_args).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().expect("Error opening dmenu")
     };
 
     { //THIS CODE BLOCK is to localize the following borrow.
@@ -46,14 +46,14 @@ fn main() {
                     if fileutils::file_of_filetype(file, filetype.as_ref()) && Path::new(file).exists(){
                         // println!("{}", file);
                         //FIXME: sometimes the file may be deleted but the parent directory is of interest. include that logic...
-                        let file_ln = format!("{}\n", file);
+                        let file_ln = format!("{file}\n");
                         ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
                         let dir = Path::new(file).parent().unwrap();
                         match dir.as_os_str().to_str() {
                             Some(direc) => {
                                 directories.insert(direc);
                             }
-                            None => eprintln!("Unable to insert {:?}", dir),
+                            None => eprintln!("Unable to insert {dir:?}"),
                         }
                     }
                 }
@@ -71,7 +71,7 @@ fn main() {
                         if fileutils::file_of_filetype(file.as_ref(), &filetype) && !already_shown.contains(file.as_str()) {
                             // println!("{}", file);
                             already_shown.insert(file.clone());
-                            let file_ln = format!("{}\n", file);
+                            let file_ln = format!("{file}\n");
                             ext_process_stdin.write_all(file_ln.as_bytes()).expect("Error sending name of file to dmenu");
                         }
                     }
@@ -93,7 +93,7 @@ fn main() {
 
 fn get_current_dirs_of_tmux() -> Vec<String>{
     let tmux_args = ["list-panes", "-s", "-F #{pane_current_path}"];
-    let output = Command::new("tmux").args(&tmux_args).output();
+    let output = Command::new("tmux").args(tmux_args).output();
     let output = output.unwrap();
     let current_folders = String::from_utf8_lossy(output.stdout.as_slice());
     let current_folders: Vec<String> = current_folders.lines().map(|f| f.trim().to_owned()).collect();

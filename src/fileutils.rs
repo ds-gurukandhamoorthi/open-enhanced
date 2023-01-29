@@ -3,7 +3,7 @@ use once_cell::sync::Lazy;
 
 static EXTENSIONS_PATTERN : Lazy <RegexSet> = Lazy::new(|| {
     // CAUTION: order is important.
-    RegexSet::new(&[
+    RegexSet::new([
     r#"\.(pdf|epub|mobi)$"#, //book
     r#"\.(mp3|wav|m4a|aac|opus|webm)$"#, //video
     r#"\.(mp4|mkv|avi|wav|mpg|webm)$"#, //audio
